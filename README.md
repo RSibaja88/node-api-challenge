@@ -40,13 +40,29 @@ Demonstrate your understanding of this Sprint's concepts by answering the follow
 
 - [ ] Mention two parts of Express that you learned about this week.
 
+- The "request" object contains information about the HTTP request. You can access the request headers, full url, caller IP address etc within the requestObject.
+ The responseObject represents the HTTP response that an Express app sends when it gets an HTTP request.
+
+- Express middleware can be use to define different routes within our express application
+
 - [ ] Describe Middleware?
+
+- Middleware is software that lies between an operating system and the applications running on it. Essentially functioning as hidden translation layer, middleware enables communication and data management for distributed applications
+
 
 - [ ] Describe a Resource?
 
+- The fundamental concept in any RESTful API is the resource. A resource is an object with a type, associated data, relationships to other resources, and a set of methods that operate on it.
+
+
 - [ ] What can the API return to help clients know if a request was successful?
 
+- an HTTP status code from 200-209
+
+
 - [ ] How can we partition our application into sub-applications?
+
+Express Router would split the server up into subcomponents. Using Routes and Router would allow us to require and export different parts of the app. 
 
 ## Minimum Viable Product
 

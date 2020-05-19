@@ -1,18 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Projects = require('../data/helpers/projectModel.js');
-const Actions = require('../data/helpers/actionModel.js');
-const middle = require("../middle");
-const valProID = middle.valProId;
-const valPro = middle.valPro;
-const valActID = middle.valActId;
-const valAct = middle.valAct;
+const dbP = require('../data/helpers/projectModel.js');
 
 
 
-//projects endpoints
+
+//project endpoints
 router.get("/", (req, res) => {
-    Projects.get()
+    dbP.get()
     .then(pro => {
         res.status(200).json(pro);
     })
@@ -21,56 +16,73 @@ router.get("/", (req, res) => {
     });
 });
 
-router.get("/id", valProID, (res,req) => {
-    const { id } = req.params
-    Projects.get(id)
-    .then(pro => {
-        res.status(200).json(pro);
-    })
-    .catch(err => {
-        res.status(500).json({error: "Error has occured retreiving this project"}, err);
-    })
-});
+router.post("/", (req, res) => {
+    const {name, description} = req.body;
+    if(!name || !description) {
+        res.status(400).send("Please provide title and contents for project.")
+    } else {
+        dbP.insert(req.body)
+        .then(project => {
+            res.status(201).send(project);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send("There was an error while saving your changes to db")
+        })
+    }
+})
 
-router.put("/:id", valProID, valPro, (res, req) => {
-    const { id } = req.params;
-    Projects.update(id, req.body)
-    .then(pro => {
-        res.status(200).json({ success: "Your changes have successfully updated", info: req.body});
+router.get("/:id", async (req, res) => {
+    const id = req.params.id
+    try {
+        const project = await dbP.get(id);
+        project ? res.status(201).send(project) : res.status(404).send("The project with the specified ID does not exist.")
+    } catch {
+        res.status(500).send( "The project information could not be retrieved.")
+    }
+})
+
+router.put('/:id', async (req, res) => {
+    try {
+        const project = await dbP.update(req.params.id, req.body)
+        project === 1 ? res.status(201).json(project) : res.status(404).json("The project with the specified ID does not exist.")
+    } catch {
+        res.status(500).json("The project information could not be modified.")
+    }
+})
+
+router.delete("/:id", (req, res) => {
+    const id = req.params.id
+    dbP.remove(id)
+    .then(project => {
+        if (project) {
+            res.status(200).send("Project has been deleted.")
+        } else {
+            res
+                .status(404)
+                .send("The project with the specified ID does not exist.")
+        }
     })
-    .catch(err => {
-        res.status(500).json({errorMessage: "Error has occured updating this project"}, err);
+    .catch(error => {
+        console.log(error);
+        res
+            .status(500)
+            .send("The project couldnt be recovered.")
     })
 })
 
-router.delete("/:id", valProID, (req, res) => {
-    const { id } = req.params;
-    Projects.get(id)
-    .then(pro => {
-      pro
-        ? Projects.remove(id).then(deleted => {
-            deleted
-              ? res
-                  .status(200)
-                  .json({ success: `Project ${id} was deleted`, info: project })
-              : null;
-          })
-          .catch(err => {
-            res.status(500).json({errorMessage: "Error has occured updating this project"}, err);
+router.get('/:id/actions',(req,res) => {
+    dbP.getProjectActions(req.params.id)
+        .then(resp => {
+            if(resp){
+                res.status(200).json({resp})
+            } else {
+                res.status(404).json({message: 'no actions found'})
+            }
         })
-        : null;
-    });
-  }); 
-
-  router.get("/:id", valProID, valActID, (res,req) => {
-    const { id } = req.params
-    Projects.getProjectActions(id)
-    .then(data => {
-        data ? res.status(200).json(data) : null
-    })
-    .catch(err => {
-        res.status(500).json({error: "Error has occured retreiving this action"}, err);
-    })
-});
+        .catch(err => {
+            res.status(500).json({message: 'something went wrong.', err})
+        })
+})
 
 module.exports = router; 
